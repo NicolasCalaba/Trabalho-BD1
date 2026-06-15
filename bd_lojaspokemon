@@ -1,0 +1,203 @@
+--Banco de Dados
+CREATE TABLE pessoa (
+    id_pessoa INT PRIMARY KEY,
+    nome VARCHAR(60) NOT NULL,
+    endereco_rua VARCHAR(50),
+    endereco_numero VARCHAR(10),
+    endereco_cidade VARCHAR(50)
+);
+
+CREATE TABLE telefone_pessoa (
+    id_pessoa INT,
+    telefone VARCHAR(20),
+    PRIMARY KEY (id_pessoa, telefone),
+    FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa)
+);
+
+CREATE TABLE treinador (
+    id_pessoa INT PRIMARY KEY,
+    data_de_nascimento DATE,
+    saldo NUMERIC(10,2),
+    FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa)
+);
+
+CREATE TABLE pokemon (
+    numero_pokedex INT PRIMARY KEY,
+    tipo1 VARCHAR(20) NOT NULL,
+    tipo2 VARCHAR(20)
+);
+
+CREATE TABLE treinador_pokemon (
+    id_treinador INT,
+    id_pokemon INT,
+    numero_pokedex INT,
+    apelido VARCHAR(20),
+    PRIMARY KEY (id_treinador, id_pokemon),
+    FOREIGN KEY (id_treinador)
+        REFERENCES treinador(id_pessoa),
+    FOREIGN KEY (numero_pokedex)
+        REFERENCES pokemon(numero_pokedex)
+);
+
+CREATE TABLE loja (
+    id_loja INT PRIMARY KEY,
+    gerente_codigo INT,
+    nome VARCHAR(50) NOT NULL,
+    cidade VARCHAR(50)
+);
+
+CREATE TABLE funcionario (
+    id_pessoa INT PRIMARY KEY,
+    id_loja INT,
+    matricula VARCHAR(10),
+    cargo VARCHAR(30),
+    salario NUMERIC(10,2),
+    FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa),
+    FOREIGN KEY (id_loja)
+        REFERENCES loja(id_loja)
+);
+
+ALTER TABLE loja
+ADD CONSTRAINT fk_loja_gerente
+FOREIGN KEY (gerente_codigo)
+REFERENCES funcionario(id_pessoa);
+
+CREATE TABLE item (
+    id_item INT PRIMARY KEY,
+    nome VARCHAR(30) NOT NULL,
+    categoria VARCHAR(30),
+    preco NUMERIC(10,2)
+);
+
+CREATE TABLE item_loja (
+    id_loja INT,
+    id_item INT,
+    quantidade_estoque INT NOT NULL,
+    PRIMARY KEY (id_loja, id_item),
+    FOREIGN KEY (id_loja)
+        REFERENCES loja(id_loja),
+    FOREIGN KEY (id_item)
+        REFERENCES item(id_item)
+);
+
+CREATE TABLE item_consumivel (
+    id_item INT PRIMARY KEY,
+    recuperacao_hp INT,
+    remove_status VARCHAR(20),
+    FOREIGN KEY (id_item)
+        REFERENCES item(id_item)
+);
+
+CREATE TABLE item_especial (
+    id_item INT PRIMARY KEY,
+    efeito_especifico VARCHAR(100),
+    FOREIGN KEY (id_item)
+        REFERENCES item(id_item)
+);
+
+CREATE TABLE fornecedor (
+    id_fornecedor INT PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL,
+    regiao VARCHAR(50),
+    contato VARCHAR(50)
+);
+
+CREATE TABLE encomenda (
+    id_encomenda INT PRIMARY KEY,
+    id_loja INT,
+    id_fornecedor INT,
+    data_encomenda DATE,
+    valor_total NUMERIC(10,2),
+    FOREIGN KEY (id_loja)
+        REFERENCES loja(id_loja),
+    FOREIGN KEY (id_fornecedor)
+        REFERENCES fornecedor(id_fornecedor)
+);
+
+CREATE TABLE item_encomenda (
+    id_encomenda INT,
+    id_item INT,
+    quantidade_comprada INT,
+    PRIMARY KEY (id_encomenda, id_item),
+    FOREIGN KEY (id_encomenda)
+        REFERENCES encomenda(id_encomenda),
+    FOREIGN KEY (id_item)
+        REFERENCES item(id_item)
+);
+
+CREATE TABLE venda (
+    id_venda INT PRIMARY KEY,
+    id_treinador INT,
+    id_loja INT,
+    data DATE,
+    valor_total NUMERIC(10,2),
+    FOREIGN KEY (id_treinador)
+        REFERENCES treinador(id_pessoa),
+    FOREIGN KEY (id_loja)
+        REFERENCES loja(id_loja)
+);
+
+CREATE TABLE item_venda (
+    id_venda INT,
+    id_item INT,
+    quantidade_comprada INT,
+    PRIMARY KEY (id_venda, id_item),
+    FOREIGN KEY (id_venda)
+        REFERENCES venda(id_venda),
+    FOREIGN KEY (id_item)
+        REFERENCES item(id_item)
+);
+
+-- Views
+--Ver meus funcionarios
+CREATE VIEW view_funcionarios AS
+SELECT
+    f.id_pessoa,
+    p.nome,
+    f.matricula,
+    f.cargo,
+    l.nome AS loja
+FROM funcionario f
+JOIN pessoa p ON p.id_pessoa = f.id_pessoa
+LEFT JOIN loja l ON l.id_loja = f.id_loja;
+
+-- Ver os treinadores e seus pokemons
+CREATE VIEW view_treinadores_pokemon AS
+SELECT
+    p.nome AS treinador,
+    tp.id_pokemon,
+    tp.apelido,
+    pk.numero_pokedex,
+    pk.tipo1,
+    pk.tipo2
+FROM treinador_pokemon tp
+JOIN treinador t ON t.id_pessoa = tp.id_treinador
+JOIN pessoa p ON p.id_pessoa = t.id_pessoa
+JOIN pokemon pk ON pk.numero_pokedex = tp.numero_pokedex;
+
+--Funcao de subtrair meu estoque apos vendas
+CREATE OR REPLACE FUNCTION funcao_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE item_loja
+    SET quantidade_estoque =
+        quantidade_estoque - NEW.quantidade_comprada
+    WHERE id_item = NEW.id_item
+    AND id_loja = (
+        SELECT id_loja
+        FROM venda
+        WHERE id_venda = NEW.id_venda
+    );
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER trigger
+AFTER INSERT ON item_venda
+FOR EACH ROW
+EXECUTE FUNCTION funcao_trigger();
