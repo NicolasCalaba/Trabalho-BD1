@@ -2,14 +2,14 @@
 CREATE TABLE pessoa (
     id_pessoa INT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    endereco_rua VARCHAR(50),
-    endereco_numero VARCHAR(10),
-    endereco_cidade VARCHAR(50)
+    endereco_rua VARCHAR(50) NOT NULL,
+    endereco_numero VARCHAR(10) NOT NULL,
+    endereco_cidade VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE telefone_pessoa (
     id_pessoa INT,
-    telefone VARCHAR(20),
+    telefone VARCHAR(20) NOT NULL,
     PRIMARY KEY (id_pessoa, telefone),
     FOREIGN KEY (id_pessoa)
         REFERENCES pessoa(id_pessoa)
@@ -17,8 +17,8 @@ CREATE TABLE telefone_pessoa (
 
 CREATE TABLE treinador (
     id_pessoa INT PRIMARY KEY,
-    data_de_nascimento DATE,
-    saldo NUMERIC(10,2),
+    data_de_nascimento DATE NOT NULL,
+    saldo NUMERIC(10,2) NOT NULL,
     FOREIGN KEY (id_pessoa)
         REFERENCES pessoa(id_pessoa)
 );
@@ -33,7 +33,7 @@ CREATE TABLE treinador_pokemon (
     id_treinador INT,
     id_pokemon INT,
     numero_pokedex INT,
-    apelido VARCHAR(20),
+    apelido VARCHAR(20) NOT NULL,
     PRIMARY KEY (id_treinador, id_pokemon),
     FOREIGN KEY (id_treinador)
         REFERENCES treinador(id_pessoa),
@@ -45,15 +45,15 @@ CREATE TABLE loja (
     id_loja INT PRIMARY KEY,
     gerente_codigo INT,
     nome VARCHAR(50) NOT NULL,
-    cidade VARCHAR(50)
+    cidade VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE funcionario (
     id_pessoa INT PRIMARY KEY,
     id_loja INT,
-    matricula VARCHAR(10),
-    cargo VARCHAR(30),
-    salario NUMERIC(10,2),
+    matricula VARCHAR(10) NOT NULL,
+    cargo VARCHAR(30) NOT NULL,
+    salario NUMERIC(10,2) NOT NULL,
     FOREIGN KEY (id_pessoa)
         REFERENCES pessoa(id_pessoa),
     FOREIGN KEY (id_loja)
@@ -68,8 +68,8 @@ REFERENCES funcionario(id_pessoa);
 CREATE TABLE item (
     id_item INT PRIMARY KEY,
     nome VARCHAR(30) NOT NULL,
-    categoria VARCHAR(30),
-    preco NUMERIC(10,2)
+    categoria VARCHAR(30) NOT NULL,
+    preco NUMERIC(10,2) NOT NULL
 );
 
 CREATE TABLE item_loja (
@@ -85,7 +85,7 @@ CREATE TABLE item_loja (
 
 CREATE TABLE item_consumivel (
     id_item INT PRIMARY KEY,
-    recuperacao_hp INT,
+    recuperacao_hp INT NOT NULL,
     remove_status VARCHAR(20),
     FOREIGN KEY (id_item)
         REFERENCES item(id_item)
@@ -93,7 +93,7 @@ CREATE TABLE item_consumivel (
 
 CREATE TABLE item_especial (
     id_item INT PRIMARY KEY,
-    efeito_especifico VARCHAR(100),
+    efeito_especifico VARCHAR(100) NOT NULL,
     FOREIGN KEY (id_item)
         REFERENCES item(id_item)
 );
@@ -101,16 +101,16 @@ CREATE TABLE item_especial (
 CREATE TABLE fornecedor (
     id_fornecedor INT PRIMARY KEY,
     nome VARCHAR(50) NOT NULL,
-    regiao VARCHAR(50),
-    contato VARCHAR(50)
+    regiao VARCHAR(50) NOT NULL,
+    contato VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE encomenda (
     id_encomenda INT PRIMARY KEY,
     id_loja INT,
     id_fornecedor INT,
-    data_encomenda DATE,
-    valor_total NUMERIC(10,2),
+    data_encomenda DATE NOT NULL,
+    valor_total NUMERIC(10,2) NOT NULL,
     FOREIGN KEY (id_loja)
         REFERENCES loja(id_loja),
     FOREIGN KEY (id_fornecedor)
@@ -120,7 +120,7 @@ CREATE TABLE encomenda (
 CREATE TABLE item_encomenda (
     id_encomenda INT,
     id_item INT,
-    quantidade_comprada INT,
+    quantidade_comprada INT NOT NULL,
     PRIMARY KEY (id_encomenda, id_item),
     FOREIGN KEY (id_encomenda)
         REFERENCES encomenda(id_encomenda),
@@ -132,8 +132,8 @@ CREATE TABLE venda (
     id_venda INT PRIMARY KEY,
     id_treinador INT,
     id_loja INT,
-    data DATE,
-    valor_total NUMERIC(10,2),
+    data DATE NOT NULL,
+    valor_total NUMERIC(10,2) NOT NULL,
     FOREIGN KEY (id_treinador)
         REFERENCES treinador(id_pessoa),
     FOREIGN KEY (id_loja)
@@ -143,7 +143,7 @@ CREATE TABLE venda (
 CREATE TABLE item_venda (
     id_venda INT,
     id_item INT,
-    quantidade_comprada INT,
+    quantidade_comprada INT NOT NULL,
     PRIMARY KEY (id_venda, id_item),
     FOREIGN KEY (id_venda)
         REFERENCES venda(id_venda),
